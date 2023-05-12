@@ -1,6 +1,27 @@
-from tkinter import messagebox, Tk
+from tkinter import *
+from PIL import ImageTk, Image
+from box import Box
+import board
 import pygame
 import sys
+
+
+def show_lose_window(lose):
+    root = Tk()
+    root.geometry("500x500")
+    root.title("Seu rato vai passar fome!")
+    image = Image.open(lose)
+    photo = ImageTk.PhotoImage(image)
+    
+    image_label = Label(root, image=photo)
+    image_label.pack()
+    
+    text_label = Label(root, text="Seu rato vai passar fome!")
+    text_label.pack()
+    
+    root.mainloop()
+    
+    
 
 window_width = 900
 window_height = 900
@@ -19,56 +40,15 @@ piso = pygame.image.load("assets/piso2.png")
 gato = pygame.image.load("assets/gato2.jpg")
 interrogacao = pygame.image.load("assets/interrogacao.png")
 
+
 grid = []
 queue = []
 path = []
 
 
-class Box:
-    def __init__(self, i, j):
-        self.x = i
-        self.y = j
-        self.start = False
-        self.wall = False
-        self.target = False
-        self.queued = False
-        self.visited = False
-        self.neighbours = []
-        self.prior = None
-
-    def draw(self, win, image):    
-        win.blit(image, (self.x * box_width, self.y * box_height))
-    
-    def draw_square(self, win, color):
-        pygame.draw.rect(win, color, (self.x * box_width, self.y * box_height, box_width-2, box_height-2))
-
-    def set_neighbours(self):
-        if self.x > 0:
-            self.neighbours.append(grid[self.x - 1][self.y])
-        if self.x < columns - 1:
-            self.neighbours.append(grid[self.x + 1][self.y])
-        if self.y > 0:
-            self.neighbours.append(grid[self.x][self.y - 1])
-        if self.y < rows - 1:
-            self.neighbours.append(grid[self.x][self.y + 1])
-
-
-# Create Grid
-for i in range(columns):
-    arr = []
-    for j in range(rows):
-        arr.append(Box(i, j))
-    grid.append(arr)
-
-# Set Neighbours
-for i in range(columns):
-    for j in range(rows):
-        grid[i][j].set_neighbours()
-
-start_box = grid[0][0]
-start_box.start = True
-start_box.visited = True
-queue.append(start_box)
+board.create_grid(columns, rows,grid)
+board.set_neighbours(columns, rows, grid)
+start_box = board.board_setup(grid,queue)
 
 
 def main():
@@ -121,8 +101,7 @@ def main():
                             queue.append(neighbour)
             else:
                 if searching:
-                    Tk().wm_withdraw()
-                    messagebox.showinfo("Seu rato vai passar fome", "Não há caminho para o queijo")
+                    show_lose_window("assets/losegame.jpg")
                     searching = False
 
         window.fill((0, 0, 0))
@@ -131,28 +110,28 @@ def main():
             for j in range(rows):
                 box = grid[i][j]
                 #Background Color
-                box.draw(window, piso)
+                box.draw(window, piso,box_width,box_height)
 
                 if box.queued:
                     #Queue image
-                    box.draw(window, interrogacao)
+                    box.draw(window, interrogacao,box_width,box_height)
 
                 if box.visited:
                     #Visited Color
-                    box.draw_square(window, (0, 150, 0))
+                    box.draw_square(window, (0, 150, 0),box_width,box_height)
                 if box in path:
                     #Path Color
-                    box.draw_square(window, (0, 255, 255))
+                    box.draw_square(window, (0, 255, 255),box_width,box_height)
 
                 if box.start:
                     #Rat image
-                    box.draw(window, rato)
+                    box.draw(window, rato,box_width,box_height)
                 if box.wall:
                     #Cat Image
-                    box.draw(window, gato)
+                    box.draw(window, gato,box_width,box_height)
                     #Cheese Image
                 if box.target:
-                    box.draw(window, queijo)
+                    box.draw(window, queijo,box_width,box_height)
 
         pygame.display.flip()
 
