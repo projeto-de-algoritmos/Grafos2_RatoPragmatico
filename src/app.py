@@ -4,22 +4,10 @@ from box import Box
 import board
 import pygame
 import sys
+import minorpath
+from pygame import mixer
 
 
-def show_lose_window(lose):
-    root = Tk()
-    root.geometry("500x500")
-    root.title("Seu rato vai passar fome!")
-    image = Image.open(lose)
-    photo = ImageTk.PhotoImage(image)
-    
-    image_label = Label(root, image=photo)
-    image_label.pack()
-    
-    text_label = Label(root, text="Seu rato vai passar fome!")
-    text_label.pack()
-    
-    root.mainloop()
     
     
 
@@ -37,7 +25,7 @@ box_height = window_height // rows
 rato = pygame.image.load("assets/rato3.png")
 queijo = pygame.image.load("assets/queijo2.png")
 piso = pygame.image.load("assets/piso2.png")
-gato = pygame.image.load("assets/gato2.jpg")
+gato = pygame.image.load("assets/gato2.png")
 interrogacao = pygame.image.load("assets/interrogacao.png")
 
 
@@ -57,7 +45,12 @@ def main():
     searching = True
     target_box = None
 
+    mixer.init()
+    mixer.music.load('assets/music.mp3')
+    mixer.music.set_volume(0.1)
+    mixer.music.play(-1)
     while True:
+        
         for event in pygame.event.get():
             # Quit Window
             if event.type == pygame.QUIT:
@@ -85,25 +78,8 @@ def main():
                 begin_search = True
 
         if begin_search:
-            if len(queue) > 0 and searching:
-                current_box = queue.pop(0)
-                current_box.visited = True
-                if current_box == target_box:
-                    searching = False
-                    while current_box.prior != start_box:
-                        path.append(current_box.prior)
-                        current_box = current_box.prior
-                else:
-                    for neighbour in current_box.neighbours:
-                        if not neighbour.queued and not neighbour.wall:
-                            neighbour.queued = True
-                            neighbour.prior = current_box
-                            queue.append(neighbour)
-            else:
-                if searching:
-                    show_lose_window("assets/losegame.jpg")
-                    searching = False
-
+            searching= minorpath.dijikstra(queue,start_box, target_box, searching, path)
+    
         window.fill((0, 0, 0))
 
         for i in range(columns):
@@ -121,8 +97,7 @@ def main():
                     box.draw_square(window, (0, 150, 0),box_width,box_height)
                 if box in path:
                     #Path Color
-                    box.draw_square(window, (0, 255, 255),box_width,box_height)
-
+                    box.draw_square(window, (255, 255, 0),box_width,box_height)
                 if box.start:
                     #Rat image
                     box.draw(window, rato,box_width,box_height)
@@ -132,8 +107,16 @@ def main():
                     #Cheese Image
                 if box.target:
                     box.draw(window, queijo,box_width,box_height)
-
+        
         pygame.display.flip()
+
+        if path != []: 
+            minorpath.show_win_window("assets/wingame.png")
+            break
+    
+    
 
 
 main()
+
+         
